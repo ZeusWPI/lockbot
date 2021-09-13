@@ -62,8 +62,6 @@ void give400(EthernetClient* client, const char* message) {
   client->print(message);
   client->flush();
   client->stop();
-  delay(500);
-  Serial.println("Still alive");
 }
 
 uint64_t current_command_counter = 0;

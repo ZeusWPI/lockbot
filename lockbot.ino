@@ -467,6 +467,7 @@ void turnAssistLoop() {
   }
 }
 uint32_t lastprint = 0;
+uint32_t last_change_state = 0;
 
 void loop()
 {
@@ -491,8 +492,9 @@ void loop()
     lastprint = millis();
   }
 
-  if (last_status != getLockStatus()) {
-    sendMattermoreData("change", "state", getLockStatus());
-    last_status = getLockStatus();
+  lock_status new_status = getLockStatus();
+  if (new_status != inbetween && new_status != last_status) {
+    last_status = new_status;
+    sendMattermoreData("change", "state", last_status);
   }
 }

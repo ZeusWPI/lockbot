@@ -61,7 +61,7 @@ module main_gear() {
 }
 
 module small_gear() {
-  extra_height=5;
+  extra_height=15;
   spur_gear(modul, small_gear_teeth, potentiometer_shaft_depth+extra_height, potentiometer_shaft_diameter);
   cylinder(r=5, h=extra_height-potentiometer_groove_depth);
   color([1, 0.5, 0]) intersection() {
@@ -85,6 +85,6 @@ module support() {
 }
 
 
-main_gear();
-translate([0, gear_distance, depth-potentiometer_shaft_depth+1]) small_gear();
+/* main_gear(); */
+/* translate([0, gear_distance, depth-potentiometer_shaft_depth+1]) small_gear(); */
 translate([50, 0, 0]) support();

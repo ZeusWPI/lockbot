@@ -51,10 +51,10 @@ module main_gear() {
     }
 
     union() {
-      knob();
-      translate([0, 0, depth]) centered_cube(size=[40, 13, 20], center=[1, 1, 0]);
-      translate([-13, 0, 0]) cylinder(r=0.5, h=100);
-      translate([13, 0, 0]) cylinder(r=0.5, h=100);
+      scale([1.3, 1.2, 1]) translate([0, 0, -0.01]) knob();
+      translate([0, 0, depth-0.02]) centered_cube(size=[40, 13, 20], center=[1, 1, 0]);
+      translate([-13, 0, 0]) cylinder(r=0.7, h=100);
+      translate([13, 0, 0]) cylinder(r=0.7, h=100);
     }
   }
 
@@ -85,6 +85,6 @@ module support() {
 }
 
 
-/* main_gear(); */
+main_gear();
 /* translate([0, gear_distance, depth-potentiometer_shaft_depth+1]) small_gear(); */
-translate([50, 0, 0]) support();
+/* translate([50, 0, 0]) support(); */

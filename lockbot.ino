@@ -14,11 +14,25 @@
 #define OPEN_BOUND_ADDRESS 12
 #define CLOSED_BOUND_ADDRESS 16
 
+// Connect wiper pin of 10k potentiometer to A0, the other pins to VCC and ground
 #define POTENTIOMETER_PIN A0
+
+// Connect IN pin of relay to pin 3, VCC pin to the motor power supply 5V, ground to ground
+// common to the motor power supply 5V cable, NO (normal open) to the 5V cable of the motor
 #define RELAY_PIN 3
+
+// Connect one leg of the button to 5, the other to ground
 #define BUTTON_PIN 5
+
+// Connect the positive pin of the buzzer to 6, the other pin to ground
 #define BUZZER_PIN 6
+
+// Leave this pin unconnected (or alternatively, connect a short length of wire to the pin and leave unconnected)
+// This is used to collect randomness via ADC noise
 #define UNCONNECTED_RANDOM_PIN A1
+
+// SERVO_PIN_A = 9
+// Connect the data pin of the servo motor to pin 9, ground to ground. VCC should already be connected to NO of the relay
 
 #define ANALOG_PRECISION 4
 

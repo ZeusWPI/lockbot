@@ -24,8 +24,10 @@
 // Connect one leg of the button to 5, the other to ground
 #define BUTTON_PIN 5
 
-// Connect the positive pin of the buzzer to 6, the other pin to ground
-#define BUZZER_PIN 6
+// Connect the positive pin of the buzzer to A3, the other pin to ground
+// This is a buzzer, where if you put a voltage across the pins, it starts making noise
+// No need to use the tone function
+#define BUZZER_PIN A3
 
 // Leave this pin unconnected (or alternatively, connect a short length of wire to the pin and leave unconnected)
 // This is used to collect randomness via ADC noise
@@ -237,9 +239,9 @@ void panic(const char* msg) {
   uint32_t starttime = millis();
   while (millis() - starttime < 5000) {
     if (((millis() - starttime) / 250) % 2 == 0) {
-      tone(BUZZER_PIN, 1000);
+      digitalWrite(BUZZER_PIN, HIGH);
     } else {
-      noTone(BUZZER_PIN);
+      digitalWrite(BUZZER_PIN, HIGH);
     }
   }
 
@@ -255,22 +257,22 @@ void panic(const char* msg) {
     uint32_t duration;
     if (interelement) {
       duration = MS_DIT;
-      noTone(BUZZER_PIN);
+      digitalWrite(BUZZER_PIN, LOW);
     } else if (current == '.') {
       duration = MS_DIT;
-      tone(BUZZER_PIN, FREQ);
+      digitalWrite(BUZZER_PIN, HIGH);
     } else if (current == '-') {
       duration = 3 * MS_DIT;
-      tone(BUZZER_PIN, FREQ);
+      digitalWrite(BUZZER_PIN, HIGH);
     } else if (current == ' ') {
       duration = 2 * MS_DIT; // 3 - 1 because we already did interelement
-      noTone(BUZZER_PIN);
+      digitalWrite(BUZZER_PIN, LOW);
     } else if (current == 0) {
       duration = 5 * MS_DIT; // 7 - 2 because we already did interelement and will do interelement again
-      noTone(BUZZER_PIN);
+      digitalWrite(BUZZER_PIN, LOW);
     } else {
       duration = 10 * MS_DIT;
-      tone(BUZZER_PIN, 1000);
+      digitalWrite(BUZZER_PIN, HIGH);
     }
     if (time_passed > duration) {
       starttime = millis();
@@ -362,15 +364,12 @@ lock_status getLockStatus()
 }
 
 void delayedLock() {
-  uint32_t starttime = millis();
-  while (millis() - starttime < 10000) {
-    if (((millis() - starttime) / 700) % 2 == 0) {
-      tone(BUZZER_PIN, 1200);
-    } else {
-      noTone(BUZZER_PIN);
-    }
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(1000);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(1000);
   }
-  noTone(BUZZER_PIN);
   lockDoor();
 }
 
@@ -412,7 +411,7 @@ void setup()
   digitalWrite(RELAY_PIN, LOW);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);
-  tone(BUZZER_PIN, 600);
+  digitalWrite(BUZZER_PIN, HIGH);
   last_value_turnassist = analogRead(POTENTIOMETER_PIN);
   Serial.begin(9600);
   Serial.println("Booting up ...");
@@ -440,7 +439,7 @@ void setup()
     generated_random[i] = 'A' + (analogRead(UNCONNECTED_RANDOM_PIN) % 26);
   }
   sendMattermoreData((char*) generated_random, "chal", getLockStatus());
-  noTone(BUZZER_PIN);
+  digitalWrite(BUZZER_PIN, LOW);
   last_status = getLockStatus();
 }
 

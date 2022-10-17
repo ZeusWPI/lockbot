@@ -1,13 +1,13 @@
 # Lockbot
 
-Lockbot is a robot attached to our door that makes it possible for trusted members who don't have a key to open the door. It consists of a servo motor, two gears, a potentiometer and an Arduino Uno.
+Lockbot is a robot attached to our door that makes it possible for trusted members who don't have a key to open the door. It consists of a servo motor, two gears, a potentiometer and an Arduino Uno + ethernet shield.
 
 ![A closeup of just the motor and gears](./pictures/lockbot_closeup.jpg)
 
 ![Global picture of lockbot](./pictures/lockbot_full.jpg)
 
 
-## Build instructions
+## Microcontroller build instructions
 
 1. Install the Arduino IDE
 2. Install the needed libraries in the Library Manager (see the top of `lockbot.ino`)
@@ -18,9 +18,11 @@ Lockbot is a robot attached to our door that makes it possible for trusted membe
 ## 3D-print instructions
 
 1. Install OpenSCAD
-2. To print each part, comment out the other parts, export as STL then 3D print it. The big gear should be printed with 5 perimeter walls and solid infill, so it can handle the forces.
+2. To print each lockbot part, open `printfile.scad` in OpenSCAD, uncomment the part you want to print, render it, export as STL then 3D print it. The big gear should be printed with 5 perimeter walls and solid infill, so it can handle the forces.
 
-![The two gears and support used in lockbot](./lockbot.png "Gears")
+![The two gears and support used in lockbot](./pictures/design.png "Gears")
+
+The NFC plate that holds the NFC cards is also included in this repository, see `nfc_plate.scad`.
 
 ## Components
 

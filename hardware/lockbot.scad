@@ -69,26 +69,3 @@ module small_gear() {
     translate([0, 0, extra_height-potentiometer_groove_depth]) centered_cube([10, potentiometer_groove_width, potentiometer_groove_depth], center=[true, true, false]);
   }
 }
-
-module support() {
-  difference() {
-    union() {
-      minkowski() {
-        centered_cube([20, 20 + 10, 3], [1, 0, 0]);
-        cylinder(r=2, h=1);
-      }
-    }
-    union() {
-      // Hole for potentiometer
-      translate([0, 10, -1]) cylinder(h=20, r=11/2);
-      // Holes for M3 screws
-      translate([-5, 25, -1]) cylinder(h=20, d=3.5);
-      translate([5, 25, -1]) cylinder(h=20, d=3.5);
-    }
-  }
-}
-
-
-/* main_gear(); */
-/* translate([0, gear_distance, depth-potentiometer_shaft_depth+1]) small_gear(); */
-translate([50, 0, 0]) support();

@@ -22,12 +22,12 @@ Lockbot is a robot attached to our door that makes it possible for trusted membe
 
 ![The two gears and support used in lockbot](./pictures/design.png "Gears")
 
-The NFC plate that holds the NFC cards is also included in this repository, see `nfc_plate.scad`.
+The NFC plate that holds the NFC cards is also included in this repository, see `nfc_plate.scad`. There's spacers for the motor in `spacer.scad`, this will need to be modified for different motors.
 
 ## Components
 
 - Arduino Uno + power supply for Arduino Uno (5V USB)
-- Servo motor: DF15RSMG 360° Servo Motor - 20kg/cm + separate power supply for the servo motor
+- Servo motor: TD-8130MG 360° Servo Motor - 30kg/cm + separate power supply for the servo motor
 - Relay (also connected to motor power supply)
 - Ethernet shield
 - Buzzer

@@ -1,6 +1,7 @@
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include <PWMServo.h>    // install from Arduino libraries manager
 #include <Ethernet.h>    // install from Arduino libraries manager
+#include <toneAC2.h>     // install from https://bitbucket.org/teckel12/arduino-toneac2/wiki/Home
 #include <SPI.h>         // built-in
 #include <EEPROM.h>      // built-in
 #include "./tokens.h"
@@ -24,17 +25,16 @@
 // Connect one leg of the button to 5, the other to ground
 #define BUTTON_PIN 5
 
-// Connect the positive pin of the buzzer to A3, the other pin to ground
-// This is a buzzer, where if you put a voltage across the pins, it starts making noise
-// No need to use the tone function
-#define BUZZER_PIN A3
-
 // Leave this pin unconnected (or alternatively, connect a short length of wire to the pin and leave unconnected)
 // This is used to collect randomness via ADC noise
 #define UNCONNECTED_RANDOM_PIN A1
 
 // SERVO_PIN_A = 9
 // Connect the data pin of the servo motor to pin 9, ground to ground. VCC should already be connected to NO of the relay
+
+// toneAC buzzer pins
+#define BUZZER_1 4
+#define BUZZER_2 7
 
 #define ANALOG_PRECISION 4
 
@@ -239,9 +239,9 @@ void panic(const char* msg) {
   uint32_t starttime = millis();
   while (millis() - starttime < 5000) {
     if (((millis() - starttime) / 250) % 2 == 0) {
-      digitalWrite(BUZZER_PIN, HIGH);
+      toneAC2(BUZZER_1, BUZZER_2, 300);
     } else {
-      digitalWrite(BUZZER_PIN, HIGH);
+      noToneAC2();
     }
   }
 
@@ -257,22 +257,22 @@ void panic(const char* msg) {
     uint32_t duration;
     if (interelement) {
       duration = MS_DIT;
-      digitalWrite(BUZZER_PIN, LOW);
+      noToneAC2();
     } else if (current == '.') {
       duration = MS_DIT;
-      digitalWrite(BUZZER_PIN, HIGH);
+      toneAC2(BUZZER_1, BUZZER_2, 800);
     } else if (current == '-') {
       duration = 3 * MS_DIT;
-      digitalWrite(BUZZER_PIN, HIGH);
+      toneAC2(BUZZER_1, BUZZER_2, 800);
     } else if (current == ' ') {
       duration = 2 * MS_DIT; // 3 - 1 because we already did interelement
-      digitalWrite(BUZZER_PIN, LOW);
+      noToneAC2();
     } else if (current == 0) {
       duration = 5 * MS_DIT; // 7 - 2 because we already did interelement and will do interelement again
-      digitalWrite(BUZZER_PIN, LOW);
+      noToneAC2();
     } else {
       duration = 10 * MS_DIT;
-      digitalWrite(BUZZER_PIN, HIGH);
+      toneAC2(BUZZER_1, BUZZER_2, 800);
     }
     if (time_passed > duration) {
       starttime = millis();
@@ -364,12 +364,21 @@ lock_status getLockStatus()
 }
 
 void delayedLock() {
-  for (int i = 0; i < 5; i++) {
-    digitalWrite(BUZZER_PIN, HIGH);
-    delay(1000);
-    digitalWrite(BUZZER_PIN, LOW);
-    delay(1000);
+  unsigned long start = millis();
+  unsigned long next_change = millis() + 500;
+  bool play = false; 
+  while (millis() - start < 10000) {
+    if (millis() > next_change) {
+      if (play) {
+        toneAC2(BUZZER_1, BUZZER_2, 800);
+      } else {
+        noToneAC2();
+      }
+      play = !play;
+      next_change = millis() + (start + 10000 - millis()) / 20;
+    }
   }
+  noToneAC2();
   lockDoor();
 }
 
@@ -410,8 +419,7 @@ void setup()
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  pinMode(BUZZER_PIN, OUTPUT);
-  digitalWrite(BUZZER_PIN, HIGH);
+  toneAC2(BUZZER_1, BUZZER_2, 500);
   last_value_turnassist = analogRead(POTENTIOMETER_PIN);
   Serial.begin(9600);
   Serial.println("Booting up ...");
@@ -439,7 +447,7 @@ void setup()
     generated_random[i] = 'A' + (analogRead(UNCONNECTED_RANDOM_PIN) % 26);
   }
   sendMattermoreData((char*) generated_random, "chal", getLockStatus());
-  digitalWrite(BUZZER_PIN, LOW);
+  noToneAC2();
   last_status = getLockStatus();
 }
 

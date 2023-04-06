@@ -366,7 +366,8 @@ lock_status getLockStatus()
 void delayedLock() {
   unsigned long start = millis();
   unsigned long next_change = millis() + 500;
-  bool play = false; 
+  bool play = true;
+  toneAC2(BUZZER_1, BUZZER_2, 800);
   while (millis() - start < 10000) {
     if (millis() > next_change) {
       if (play) {

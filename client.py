@@ -10,6 +10,8 @@ command = sys.argv[1]
 if command == 'close':
     command = 'lock'
 
+assert(command in {"open", "lock", "delay", "status", "calibrate_open_pos", "calibrate_open_bnd", "calibrate_close_pos", "calibrate_close_bnd"})
+
 with open('tokens.h') as credfile:
     down_key = [line.split('"')[1] for line in credfile if 'DOWN_COMMAND_KEY' in line][0]
 

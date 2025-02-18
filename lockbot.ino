@@ -399,7 +399,7 @@ void handleCommand(const char* command, const char* reason, int* value)
     lockDoor();
   } else if (strcmp("delay", command) == 0) {
     try{
-      if(ENABLE_BOMBPLANTSOUND) sendMattermoreData("locking", reason, *value);
+      if(ENABLE_BOMBPLANTSOUND) sendMattermoreData(command, "locking", *value);
     }
     delayedLock();
   } else if (strcmp("status", command) == 0) {

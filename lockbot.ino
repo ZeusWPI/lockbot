@@ -15,6 +15,8 @@
 #define OPEN_BOUND_ADDRESS 12
 #define CLOSED_BOUND_ADDRESS 16
 
+#define ENABLE_BOMBPLANTSOUND true
+
 // Connect wiper pin of 10k potentiometer to A0, the other pins to VCC and ground
 #define POTENTIOMETER_PIN A0
 
@@ -396,6 +398,9 @@ void handleCommand(const char* command, const char* reason, int* value)
   } else if (strcmp("lock", command) == 0) {
     lockDoor();
   } else if (strcmp("delay", command) == 0) {
+    try{
+      if(ENABLE_BOMBPLANTSOUND) sendMattermoreData("locking", reason, *value);
+    }
     delayedLock();
   } else if (strcmp("status", command) == 0) {
     *value = getLockStatus();

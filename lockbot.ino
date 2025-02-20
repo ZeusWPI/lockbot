@@ -1,7 +1,10 @@
+// Compile for Arduino Uno
+
 #define ARDUINOJSON_USE_LONG_LONG 1
-#include <PWMServo.h>    // install from Arduino libraries manager
-#include <Ethernet.h>    // install from Arduino libraries manager
-#include <toneAC2.h>     // install from https://bitbucket.org/teckel12/arduino-toneac2/wiki/Home
+#include <PWMServo.h>    // install from Arduino libraries manager (version 2.1.0)
+#include <Ethernet.h>    // install from Arduino libraries manager (version 2.0.2)
+#include "./toneAC2/toneAC2.h"
+#include "./toneAC2/toneAC2.cpp"
 #include <SPI.h>         // built-in
 #include <EEPROM.h>      // built-in
 #include "./tokens.h"

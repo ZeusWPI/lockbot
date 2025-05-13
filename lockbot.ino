@@ -440,9 +440,9 @@ void setup()
   Serial.println("Initialising ethernet ...");
 
   byte mac[] = {0x00, 0x20, 0x91, 0x10, 0x00, 0x00};
-  IPAddress ip(10, 0, 1, 5);
-  IPAddress subnetMask(255, 255, 0, 0);
-  IPAddress gateway(10, 0, 0, 1);
+  IPAddress ip(192, 168, 0, 5);
+  IPAddress subnetMask(255, 255, 252, 0);
+  IPAddress gateway(192, 168, 0, 1);
   Ethernet.begin(mac, ip, gateway, gateway, subnetMask);
 
   Serial.println("Starting webserver ...");

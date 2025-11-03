@@ -9,11 +9,17 @@ Lockbot is a robot attached to our door that makes it possible for trusted membe
 
 ## Microcontroller build instructions
 
-1. Install the Arduino IDE
-2. Install the needed libraries in the Library Manager (see the top of `lockbot.ino`)
-3. Copy `tokens.h.example` to `tokens.h` and edit them if nescessary
-4. Select 'Arduino Uno' from the Board options
-5. Program the Arduino
+Requires the `platformio` cli tool, follow [these instructions](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html) to install it.
+
+Next, in [arduino/src](arduino/src), copy `tokens.h.example` to `tokens.h` and edit them if nescessary.
+
+Finally, in [arduino](arduino), build and flash using the following:
+```sh
+. ~/.platformio/penv/bin/activate # Might depend on platform
+pio run -t clean
+pio run
+pio run -t upload -t monitor
+```
 
 ## 3D-print instructions
 
@@ -34,7 +40,7 @@ The NFC plate that holds the NFC cards is also included in this repository, see 
 - Button
 - 10k multiturn potentiometer
 
-See `lockbot.ino` for how to connect these components together
+See [lockbot.cpp](arduino/src/lockbot.cpp) for how to connect these components together.
 
 Make sure that when turning the lock, the multiturn potentiometer does not go out of bounds
 (overturning it WILL break it).

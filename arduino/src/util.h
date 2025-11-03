@@ -1,5 +1,8 @@
+#pragma once
+
 #include <stdint.h>
 #include <Arduino.h>
+
 enum lock_status {
   closed    = 0,
   open      = 1,

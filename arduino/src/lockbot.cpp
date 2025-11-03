@@ -1,16 +1,16 @@
-// Compile for Arduino Uno
-
 #define ARDUINOJSON_USE_LONG_LONG 1
-#include <PWMServo.h>    // install from Arduino libraries manager (version 2.1.0)
-#include <Ethernet.h>    // install from Arduino libraries manager (version 2.0.2)
-#include "./toneAC2/toneAC2.h"
-#include "./toneAC2/toneAC2.cpp"
-#include <SPI.h>         // built-in
-#include <EEPROM.h>      // built-in
-#include "./tokens.h"
-#include "./sha256/sha256.h"
-#include "./sha256/sha256.cpp"
-#include "./util.h"
+#include <Arduino.h>
+#include <EEPROM.h>
+#include <SPI.h>
+
+#include <Ethernet.h>
+#include <PWMServo.h>
+
+#include <sha256.h>
+#include <toneAC2.h>
+
+#include "tokens.h"
+#include "util.h"
 
 
 #define OPEN_POS_ADDRESS 0
@@ -85,6 +85,8 @@ void give400(EthernetClient* client, const char* message) {
   client->stop();
 }
 
+lock_status getLockStatus();
+
 uint64_t current_command_counter = 0;
 
 // Process incoming HTTP request
@@ -129,7 +131,7 @@ bool handleIncoming(String *command)
 
   // parse body
   uint64_t received_ctr = 0;
-  const char* body_str = body_buffer;
+  const char* body_str = (char*) body_buffer;
   while (*body_str != ';' && *body_str != 0) {
     received_ctr *= 10;
     received_ctr += *body_str - '0';

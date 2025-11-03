@@ -1,5 +1,4 @@
-#include "./util.h"
-#include <stdint.h>
+#include "util.h"
 
 bool Debounced::loop(bool currently_down) {
 	uint32_t now = millis();

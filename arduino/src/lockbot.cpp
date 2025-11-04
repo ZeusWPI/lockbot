@@ -1,7 +1,6 @@
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include <Arduino.h>
 #include <EEPROM.h>
-#include <SPI.h>
 
 #include <Ethernet.h>
 #include <PWMServo.h>

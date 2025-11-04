@@ -1,0 +1,6 @@
+# -*- yaml -*-
+---
+BasedOnStyle: LLVM
+IndentWidth: 2
+SortIncludes: Never
+AllowShortEnumsOnASingleLine: false

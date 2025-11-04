@@ -12,7 +12,6 @@
 #include "tokens.h"
 #include "util.h"
 
-
 #define OPEN_POS_ADDRESS 0
 #define CLOSED_POS_ADDRESS 8
 #define OPEN_BOUND_ADDRESS 12
@@ -20,22 +19,26 @@
 
 #define ENABLE_BOMBPLANTSOUND true
 
-// Connect wiper pin of 10k potentiometer to A0, the other pins to VCC and ground
+// Connect wiper pin of 10k potentiometer to A0, the other pins to VCC and
+// ground
 #define POTENTIOMETER_PIN A0
 
-// Connect IN pin of relay to pin 3, VCC pin to the motor power supply 5V, ground to ground
-// common to the motor power supply 5V cable, NO (normal open) to the 5V cable of the motor
+// Connect IN pin of relay to pin 3, VCC pin to the motor power supply 5V,
+// ground to ground common to the motor power supply 5V cable, NO (normal open)
+// to the 5V cable of the motor
 #define RELAY_PIN 3
 
 // Connect one leg of the button to 5, the other to ground
 #define BUTTON_PIN 5
 
-// Leave this pin unconnected (or alternatively, connect a short length of wire to the pin and leave unconnected)
-// This is used to collect randomness via ADC noise
+// Leave this pin unconnected (or alternatively, connect a short length of wire
+// to the pin and leave unconnected) This is used to collect randomness via ADC
+// noise
 #define UNCONNECTED_RANDOM_PIN A1
 
 // SERVO_PIN_A = 9
-// Connect the data pin of the servo motor to pin 9, ground to ground. VCC should already be connected to NO of the relay
+// Connect the data pin of the servo motor to pin 9, ground to ground. VCC
+// should already be connected to NO of the relay
 
 // toneAC buzzer pins
 #define BUZZER_1 4
@@ -53,30 +56,32 @@ Debounced delayedLockButton;
 int last_value_turnassist;
 uint32_t last_turnassist_move = 0;
 
-char* hmac_header_name = "HMAC: ";
+char *hmac_header_name = "HMAC: ";
 
-char generated_random[32+1] = {};
+char generated_random[32 + 1] = {};
 bool received_challenge_response = false;
 
-
-bool getHMACHeader(EthernetClient* client, uint8_t* buf) {
-  if (!client->find(hmac_header_name)) return false;
+bool getHMACHeader(EthernetClient *client, uint8_t *buf) {
+  if (!client->find(hmac_header_name))
+    return false;
 
   char octet[3] = {0};
   for (int i = 0; i < 32; i++) {
     int first = client->read();
-    if (first < 0 || first == '\n') return false;
+    if (first < 0 || first == '\n')
+      return false;
     int second = client->read();
-    if (second < 0 || second == '\n') return false;
-    octet[0] = (char) first;
-    octet[1] = (char) second;
+    if (second < 0 || second == '\n')
+      return false;
+    octet[0] = (char)first;
+    octet[1] = (char)second;
     *buf = strtol(octet, 0, 16);
     buf++;
   }
   return true;
 }
 
-void give400(EthernetClient* client, const char* message) {
+void give400(EthernetClient *client, const char *message) {
   client->println(F("HTTP/1.1 400"));
   client->println(F("Connection: close"));
   client->println();
@@ -90,10 +95,10 @@ lock_status getLockStatus();
 uint64_t current_command_counter = 0;
 
 // Process incoming HTTP request
-bool handleIncoming(String *command)
-{
+bool handleIncoming(String *command) {
   client = server.available();
-  if (!client) return false;
+  if (!client)
+    return false;
   uint8_t hmac_message[32] = {0};
   if (!getHMACHeader(&client, hmac_message)) {
     give400(&client, "no_hmac");
@@ -104,7 +109,7 @@ bool handleIncoming(String *command)
   // skip rest of headers
   client.find("\r\n\r\n");
   int bytes_read = 0;
-  uint8_t body_buffer[128+1] = {0};
+  uint8_t body_buffer[128 + 1] = {0};
   // allow reading body of up to 128 bytes (should be enough)
   while (bytes_read < 128 && client.available()) {
     body_buffer[bytes_read] = client.read();
@@ -118,10 +123,11 @@ bool handleIncoming(String *command)
     return false;
   }
   Sha256Class hmac_generator;
-  hmac_generator.initHmac(DOWN_COMMAND_KEY, strlen((const char*) DOWN_COMMAND_KEY));
-  Serial.println((char*) body_buffer);
+  hmac_generator.initHmac(DOWN_COMMAND_KEY,
+                          strlen((const char *)DOWN_COMMAND_KEY));
+  Serial.println((char *)body_buffer);
   hmac_generator.write(body_buffer, bytes_read);
-  uint8_t* hmac_calculated = hmac_generator.resultHmac();
+  uint8_t *hmac_calculated = hmac_generator.resultHmac();
   if (memcmp(hmac_calculated, hmac_message, 32) != 0) {
     give400(&client, "wrong_hmac");
     // Not enough memory :/
@@ -131,7 +137,7 @@ bool handleIncoming(String *command)
 
   // parse body
   uint64_t received_ctr = 0;
-  const char* body_str = (char*) body_buffer;
+  const char *body_str = (char *)body_buffer;
   while (*body_str != ';' && *body_str != 0) {
     received_ctr *= 10;
     received_ctr += *body_str - '0';
@@ -150,33 +156,32 @@ bool handleIncoming(String *command)
   client.println("HTTP/1.1 200");
   client.println("Content-Lenght: 1");
   client.println();
-  client.print((int) getLockStatus());
+  client.print((int)getLockStatus());
   client.flush();
   client.stop();
   return true;
 }
 
 // Sends the processed commands back to mattermore to send to the channel
-bool sendMattermoreData(const char* command, const char* reason, int value)
-{
+bool sendMattermoreData(const char *command, const char *reason, int value) {
   EthernetClient requestclient;
   Serial.print("Sending to mattermore: ");
   Serial.println(reason);
-  if (requestclient.connect(MATTERMORE_SERVER_HOST, MATTERMORE_SERVER_PORT))
-  {
-    String msg = String("cmd="+String(command)+"&why="+String(reason)+"&val="+String(value));
+  if (requestclient.connect(MATTERMORE_SERVER_HOST, MATTERMORE_SERVER_PORT)) {
+    String msg = String("cmd=" + String(command) + "&why=" + String(reason) +
+                        "&val=" + String(value));
     Serial.println(msg);
     Sha256Class hmac_generator;
-    hmac_generator.initHmac(UP_COMMAND_KEY, strlen((const char*) UP_COMMAND_KEY));
+    hmac_generator.initHmac(UP_COMMAND_KEY,
+                            strlen((const char *)UP_COMMAND_KEY));
     hmac_generator.write(msg.c_str(), msg.length());
-    uint8_t* hmac_calculated = hmac_generator.resultHmac();
-    char hmac_header_hex[32*2+1] = {0};
-    char* hmac_header_build = hmac_header_hex;
+    uint8_t *hmac_calculated = hmac_generator.resultHmac();
+    char hmac_header_hex[32 * 2 + 1] = {0};
+    char *hmac_header_build = hmac_header_hex;
     for (int i = 0; i < 32; i++) {
       sprintf(hmac_header_build, "%.2X", hmac_calculated[i]);
       hmac_header_build += 2;
     }
-
 
     requestclient.println(F("POST /doorkeeper HTTP/1.1"));
     requestclient.print(F("Host: "));
@@ -198,23 +203,21 @@ bool sendMattermoreData(const char* command, const char* reason, int value)
 }
 
 // Maintain ethernet connection
-void maintainEthernet()
-{
-  switch (Ethernet.maintain())
-  {
-    case 1:
+void maintainEthernet() {
+  switch (Ethernet.maintain()) {
+  case 1:
     // Serial.println("Error: renewed fail");
     break;
-    case 2:
+  case 2:
     // Serial.println("Renewed success");
     break;
-    case 3:
+  case 3:
     // Serial.println("Error: rebind fail");
     break;
-    case 4:
+  case 4:
     // Serial.println("Rebind success");
     break;
-    default:
+  default:
     break;
   }
 }
@@ -225,9 +228,21 @@ Servo functions
 > 94 -> open, CCW from the back
 < 94 -> close, CW from the back
 */
-void turnOpen()   {digitalWrite(RELAY_PIN, HIGH); door.write(10); Serial.println(F("Turning towards open"));}
-void turnClose()  {digitalWrite(RELAY_PIN, HIGH); door.write(170); Serial.println(F("Turning towards close"));}
-void turnHalt()   {digitalWrite(RELAY_PIN, LOW); door.write(94); Serial.println(F("Turning halt"));}
+void turnOpen() {
+  digitalWrite(RELAY_PIN, HIGH);
+  door.write(10);
+  Serial.println(F("Turning towards open"));
+}
+void turnClose() {
+  digitalWrite(RELAY_PIN, HIGH);
+  door.write(170);
+  Serial.println(F("Turning towards close"));
+}
+void turnHalt() {
+  digitalWrite(RELAY_PIN, LOW);
+  door.write(94);
+  Serial.println(F("Turning halt"));
+}
 
 void turnDirection(bool directionIsOpen) {
   if (directionIsOpen) {
@@ -240,7 +255,7 @@ void turnDirection(bool directionIsOpen) {
 #define MS_DIT 50
 #define FREQ 600
 
-void panic(const char* msg) {
+void panic(const char *msg) {
   turnClose();
 
   uint32_t starttime = millis();
@@ -275,7 +290,8 @@ void panic(const char* msg) {
       duration = 2 * MS_DIT; // 3 - 1 because we already did interelement
       noToneAC2();
     } else if (current == 0) {
-      duration = 5 * MS_DIT; // 7 - 2 because we already did interelement and will do interelement again
+      duration = 5 * MS_DIT; // 7 - 2 because we already did interelement and
+                             // will do interelement again
       noToneAC2();
     } else {
       duration = 10 * MS_DIT;
@@ -316,7 +332,10 @@ void bringToState(int desired_value) {
       break;
     }
     if (millis() - last_move_check > 1000) {
-      if (initial_to_desired_positive == (last_check_value + (initial_to_desired_positive ? 1 : -1) * least_movement > current_value)) {
+      if (initial_to_desired_positive ==
+          (last_check_value +
+               (initial_to_desired_positive ? 1 : -1) * least_movement >
+           current_value)) {
         panic("Passed turning deadline"); // this will never return
         return;
       } else {
@@ -334,24 +353,23 @@ void bringToState(int desired_value) {
   last_value_turnassist = analogRead(POTENTIOMETER_PIN);
 }
 
-void lockDoor()
-{
-  if (getLockStatus() == closed) return;
+void lockDoor() {
+  if (getLockStatus() == closed)
+    return;
   int desired;
   EEPROM.get(CLOSED_POS_ADDRESS, desired);
   bringToState(desired);
 }
 
-void openDoor()
-{
-  if (getLockStatus() == open) return;
+void openDoor() {
+  if (getLockStatus() == open)
+    return;
   int desired;
   EEPROM.get(OPEN_POS_ADDRESS, desired);
   bringToState(desired);
 }
 
-lock_status getLockStatus()
-{
+lock_status getLockStatus() {
   int open_value, closed_value;
   EEPROM.get(OPEN_POS_ADDRESS, open_value);
   EEPROM.get(CLOSED_POS_ADDRESS, closed_value);
@@ -390,12 +408,13 @@ void delayedLock() {
   lockDoor();
 }
 
-void handleCommand(const char* command, const char* reason, int* value)
-{
+void handleCommand(const char *command, const char *reason, int *value) {
   int current_value = analogRead(POTENTIOMETER_PIN);
   *value = current_value;
-  // TODO implement challenge/response here and only allow other commands once challenge/response succeeded
-  //  this to prevent an attacker from tripping the breaker, thus making the Arduino (and the replay prevention counter) reset
+  // TODO implement challenge/response here and only allow other commands once
+  // challenge/response succeeded
+  //  this to prevent an attacker from tripping the breaker, thus making the
+  //  Arduino (and the replay prevention counter) reset
   // The attacker can then replay an already sent packet they MITM'ed earlier.
 
   if (strcmp("open", command) == 0) {
@@ -403,7 +422,9 @@ void handleCommand(const char* command, const char* reason, int* value)
   } else if (strcmp("lock", command) == 0) {
     lockDoor();
   } else if (strcmp("delay", command) == 0) {
-    if(ENABLE_BOMBPLANTSOUND) sendMattermoreData(command, "locking", *value); //play "bomb has been planted" if enabled
+    if (ENABLE_BOMBPLANTSOUND)
+      sendMattermoreData(command, "locking",
+                         *value); // play "bomb has been planted" if enabled
     delayedLock();
   } else if (strcmp("status", command) == 0) {
     *value = getLockStatus();
@@ -423,8 +444,7 @@ void handleCommand(const char* command, const char* reason, int* value)
 
 lock_status last_status;
 
-void setup()
-{
+void setup() {
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -455,14 +475,15 @@ void setup()
   for (int i = 0; i < 32; i++) {
     generated_random[i] = 'A' + (analogRead(UNCONNECTED_RANDOM_PIN) % 26);
   }
-  sendMattermoreData((char*) generated_random, "chal", getLockStatus());
+  sendMattermoreData((char *)generated_random, "chal", getLockStatus());
   noToneAC2();
   last_status = getLockStatus();
 }
 
 void turnAssistLoop() {
   int current_value = analogRead(POTENTIOMETER_PIN);
-  // don't assist after just having turned to prevent humans trying to get their key out activating turn assist again
+  // don't assist after just having turned to prevent humans trying to get their
+  // key out activating turn assist again
   if (millis() - last_turnassist_move < 10000) {
     last_value_turnassist = current_value;
     return;
@@ -473,7 +494,8 @@ void turnAssistLoop() {
   EEPROM.get(CLOSED_POS_ADDRESS, closed_value);
   bool toward_open_is_positive = (open_value - closed_value) > 0;
 
-  int turnassist_minimum = max(abs(open_value - closed_value) / 20, ANALOG_PRECISION);
+  int turnassist_minimum =
+      max(abs(open_value - closed_value) / 20, ANALOG_PRECISION);
   // Serial.print("minimum = ");
   // Serial.println(turnassist_minimum);
   // Serial.println(last_value_turnassist);
@@ -490,7 +512,8 @@ void turnAssistLoop() {
     Serial.print(current_value);
     Serial.print(" compared to ");
     Serial.println(last_value_turnassist);
-    bool going_toward_open = (toward_open_is_positive == ((current_value - last_value_turnassist) > 0));
+    bool going_toward_open = (toward_open_is_positive ==
+                              ((current_value - last_value_turnassist) > 0));
     int value;
     handleCommand(going_toward_open ? "open" : "lock", "turnassist", &value);
     last_turnassist_move = millis();
@@ -499,8 +522,7 @@ void turnAssistLoop() {
 uint32_t lastprint = 0;
 uint32_t last_change_state = 0;
 
-void loop()
-{
+void loop() {
   maintainEthernet();
   delayedLockButton.loop(digitalRead(BUTTON_PIN) == LOW);
 

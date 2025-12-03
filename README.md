@@ -11,7 +11,7 @@ Lockbot is a robot attached to our door that makes it possible for trusted membe
 
 Requires the `platformio` cli tool, follow [these instructions](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html) to install it.
 
-Next, in [arduino/src](arduino/src), copy `tokens.h.example` to `tokens.h` and edit them if nescessary.
+Next, in [arduino/src](arduino/src), copy `tokens.h.example` to `tokens.h` and edit them if necessary.
 
 Finally, in [arduino](arduino), build and flash using the following:
 ```sh

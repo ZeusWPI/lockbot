@@ -64,5 +64,3 @@ void turnClose();
 void turnHalt();
 
 void turnDirection(bool directionIsOpen);
-
-void panic(const char *msg);

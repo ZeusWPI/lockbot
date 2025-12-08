@@ -25,6 +25,11 @@ STR(COMMAND_TOO_LONG, "too_long");
 STR(COMMAND_WRONG_HMAC, "wrong_hmac");
 STR(COMMAND_REPLAY, "replay");
 
+STR(COMMAND_INVALID_COMMAND, "invalid_command");
+STR(COMMAND_PASSED_TURNING_DEADLINE, "passed_turning_deadline");
+STR(COMMAND_CLOSED_UNCLEANLY, "closed_uncleanly");
+STR(COMMAND_OPENED_UNCLEANLY, "opened_uncleanly");
+
 STR(REASON_BOOT, "boot");
 STR(REASON_CHALLENGE, "chal");
 STR(REASON_STATE, "state");
@@ -53,8 +58,5 @@ STR(LOG_TURNING_HALT, "Turning halt");
 STR(LOG_MATTERMORE_CONNECTING, "Connecting to mattermore...");
 STR(LOG_MATTERMORE_CONNECTING_FAILED, "Failed to connect to mattermore");
 STR(LOG_MATTERMORE_SENDING, "Sending: ");
-
-STR(PANIC_INVALID_COMMAND, "Invalid command");
-STR(PANIC_PASSED_TURNING_DEADLINE, "Passed turning deadline");
 
 #undef STR

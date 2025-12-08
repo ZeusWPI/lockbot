@@ -152,7 +152,7 @@ void handleCommand(const char *cmd, const char *why, int *val) {
     } else if (strcmp(COMMAND_CALIBRATE_CLOSE_BND, cmd) == 0) {
       EEPROM.put(CLOSED_BOUND_ADDRESS, *val);
     } else {
-      panic(PANIC_INVALID_COMMAND);
+      mattermoreHttpPost(COMMAND_INVALID_COMMAND, REASON_PANIC, getLockStatus());
     }
   }
   mattermoreHttpPost(cmd, why, *val);
@@ -215,12 +215,27 @@ void bringToState(int desired_value) {
       break;
     }
     if (millis() - last_move_check > 1000) {
-      if (initial_to_desired_positive ==
-          (last_check_value +
-               (initial_to_desired_positive ? 1 : -1) * least_movement >
-           current_value)) {
-        panic(PANIC_PASSED_TURNING_DEADLINE); // this will never return
-        return;
+      int expectedValue = last_check_value;
+      expectedValue += least_movement * (initial_to_desired_positive ? 1 : -1);
+      if (initial_to_desired_positive == (expectedValue > current_value)) {
+        // Send passed_turning_deadline panic
+        mattermoreHttpPost(COMMAND_PASSED_TURNING_DEADLINE, REASON_PANIC,
+                           getLockStatus());
+        // Move all the way
+        turnDirection(direction);
+        uint32_t starttime = millis();
+        while (millis() - starttime < 5000) {
+          if (((millis() - starttime) / 250) % 2 == 0) {
+            toneAC2(BUZZER_1, BUZZER_2, 300);
+          } else {
+            noToneAC2();
+          }
+        }
+        turnHalt();
+        mattermoreHttpPost(direction ? COMMAND_OPENED_UNCLEANLY
+                                     : COMMAND_CLOSED_UNCLEANLY,
+                           REASON_PANIC, getLockStatus());
+        break;
       } else {
         last_move_check = millis();
         last_check_value = current_value;
@@ -307,62 +322,5 @@ void turnDirection(bool directionIsOpen) {
     turnOpen();
   } else {
     turnClose();
-  }
-}
-
-void panic(const char *msg) {
-  constexpr uint32_t MS_DIT = 50;
-
-  turnClose();
-
-  uint32_t starttime = millis();
-  while (millis() - starttime < 5000) {
-    if (((millis() - starttime) / 250) % 2 == 0) {
-      toneAC2(BUZZER_1, BUZZER_2, 300);
-    } else {
-      noToneAC2();
-    }
-  }
-
-  turnHalt();
-  mattermoreHttpPost(msg, "panic", getLockStatus());
-  const char morse[] = ".--. .- -. .. -.-.";
-  int index = 0;
-  starttime = millis();
-  bool interelement = false;
-  while (true) {
-    uint32_t time_passed = millis() - starttime;
-    char current = morse[index];
-    uint32_t duration;
-    if (interelement) {
-      duration = MS_DIT;
-      noToneAC2();
-    } else if (current == '.') {
-      duration = MS_DIT;
-      toneAC2(BUZZER_1, BUZZER_2, 800);
-    } else if (current == '-') {
-      duration = 3 * MS_DIT;
-      toneAC2(BUZZER_1, BUZZER_2, 800);
-    } else if (current == ' ') {
-      duration = 2 * MS_DIT; // 3 - 1 because we already did interelement
-      noToneAC2();
-    } else if (current == 0) {
-      duration = 5 * MS_DIT; // 7 - 2 because we already did interelement and
-                             // will do interelement again
-      noToneAC2();
-    } else {
-      duration = 10 * MS_DIT;
-      toneAC2(BUZZER_1, BUZZER_2, 800);
-    }
-    if (time_passed > duration) {
-      starttime = millis();
-      if (interelement) {
-        if (current == 0) {
-          Serial.println(msg);
-        }
-        index = (index + 1) % (sizeof(morse));
-      }
-      interelement = !interelement;
-    }
   }
 }

@@ -8,8 +8,8 @@
 #include <sha256.h>
 #include <toneAC2.h>
 
-#include "tokens.h"
-#include "util.h"
+#include "tokens.hpp"
+#include "util.hpp"
 
 #define OPEN_POS_ADDRESS 0
 #define CLOSED_POS_ADDRESS 8

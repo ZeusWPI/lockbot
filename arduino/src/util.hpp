@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <Arduino.h>
 
-enum lock_status {
+enum LockStatus {
   closed = 0,
   open = 1,
   inbetween = 2

@@ -153,7 +153,7 @@ bool handleIncoming(String *command) {
   *command += body_str;
 
   client.println("HTTP/1.1 200");
-  client.println("Content-Lenght: 1");
+  client.println("Content-Length: 1");
   client.println();
   client.print((int)getLockStatus());
   client.flush();

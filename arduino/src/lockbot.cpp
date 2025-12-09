@@ -251,64 +251,6 @@ void turnDirection(bool directionIsOpen) {
   }
 }
 
-#define MS_DIT 50
-#define FREQ 600
-
-void panic(const char *msg) {
-  turnClose();
-
-  uint32_t starttime = millis();
-  while (millis() - starttime < 5000) {
-    if (((millis() - starttime) / 250) % 2 == 0) {
-      toneAC2(BUZZER_1, BUZZER_2, 300);
-    } else {
-      noToneAC2();
-    }
-  }
-
-  turnHalt();
-  sendMattermoreData(msg, "panic", getLockStatus());
-  const char morse[] = ".--. .- -. .. -.-.";
-  int index = 0;
-  starttime = millis();
-  bool interelement = false;
-  while (true) {
-    uint32_t time_passed = millis() - starttime;
-    char current = morse[index];
-    uint32_t duration;
-    if (interelement) {
-      duration = MS_DIT;
-      noToneAC2();
-    } else if (current == '.') {
-      duration = MS_DIT;
-      toneAC2(BUZZER_1, BUZZER_2, 800);
-    } else if (current == '-') {
-      duration = 3 * MS_DIT;
-      toneAC2(BUZZER_1, BUZZER_2, 800);
-    } else if (current == ' ') {
-      duration = 2 * MS_DIT; // 3 - 1 because we already did interelement
-      noToneAC2();
-    } else if (current == 0) {
-      duration = 5 * MS_DIT; // 7 - 2 because we already did interelement and
-                             // will do interelement again
-      noToneAC2();
-    } else {
-      duration = 10 * MS_DIT;
-      toneAC2(BUZZER_1, BUZZER_2, 800);
-    }
-    if (time_passed > duration) {
-      starttime = millis();
-      if (interelement) {
-        if (current == 0) {
-          Serial.println(msg);
-        }
-        index = (index + 1) % (sizeof(morse));
-      }
-      interelement = !interelement;
-    }
-  }
-}
-
 void bringToState(int desired_value) {
   int open_value, closed_value;
   EEPROM.get(OPEN_POS_ADDRESS, open_value);
@@ -335,8 +277,22 @@ void bringToState(int desired_value) {
           (last_check_value +
                (initial_to_desired_positive ? 1 : -1) * least_movement >
            current_value)) {
-        panic("Passed turning deadline"); // this will never return
-        return;
+        // Send passed_turning_deadline panic
+        sendMattermoreData("Passed turning deadline", "panic", getLockStatus());
+        // Move all the way
+        turnDirection(direction);
+        uint32_t starttime = millis();
+        while (millis() - starttime < 5000) {
+          if (((millis() - starttime) / 250) % 2 == 0) {
+            toneAC2(BUZZER_1, BUZZER_2, 300);
+          } else {
+            noToneAC2();
+          }
+        }
+        turnHalt();
+        sendMattermoreData(direction ? "Opened uncleanly" : "Closed uncleanly",
+                           "panic", getLockStatus());
+        break;
       } else {
         last_move_check = millis();
         last_check_value = current_value;
@@ -436,7 +392,7 @@ void handleCommand(const char *command, const char *reason, int *value) {
   } else if (strcmp("calibrate_close_bnd", command) == 0) {
     EEPROM.put(CLOSED_BOUND_ADDRESS, current_value);
   } else {
-    panic("Invalid command");
+    sendMattermoreData("Invalid command", "panic", getLockStatus());
   }
   sendMattermoreData(command, reason, *value);
 }

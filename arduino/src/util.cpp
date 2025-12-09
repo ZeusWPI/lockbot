@@ -1,5 +1,7 @@
 #include "util.hpp"
 
+#include <Arduino.h>
+
 bool Debounced::loop(bool currently_down) {
   uint32_t now = millis();
   if (currently_down) {

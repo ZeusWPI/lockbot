@@ -60,14 +60,14 @@ void setup() {
 
   noToneAC2();
 
-  mattermoreHttpPost(COMMAND_UP, REASON_BOOT, getLockStatus());
+  mattermoreHttpPost(String(COMMAND_UP).c_str(), REASON_BOOT, getLockStatus());
 
   for (size_t i = 0; i < sizeof(randomGeneratedChars) - 1; i++) {
     randomGeneratedChars[i] = 'A' + (analogRead(UNCONNECTED_RANDOM_PIN) % 26);
   }
 
   lastStatus = getLockStatus();
-  mattermoreHttpPost(randomGeneratedChars, "chal", lastStatus);
+  mattermoreHttpPost(randomGeneratedChars, REASON_CHALLENGE, lastStatus);
 }
 
 void loop() {
@@ -83,7 +83,7 @@ void loop() {
 
   if (delayedLockButton.get_and_reset_press_count() > 0) {
     Serial.println(LOG_DELAYED_LOCK_PRESSED);
-    handleCommand(COMMAND_DELAY, REASON_DELAY_BUTTON, &value);
+    handleCommand(String(COMMAND_DELAY).c_str(), REASON_DELAY_BUTTON, &value);
     delay(100);
   }
 
@@ -98,7 +98,8 @@ void loop() {
   LockStatus newStatus = getLockStatus();
   if (newStatus != inbetween && newStatus != lastStatus) {
     lastStatus = newStatus;
-    mattermoreHttpPost(COMMAND_CHANGE, REASON_STATE, lastStatus);
+    mattermoreHttpPost(String(COMMAND_CHANGE).c_str(), REASON_STATE,
+                       lastStatus);
   }
 }
 
@@ -122,37 +123,38 @@ void delayedLock() {
   lockDoor();
 }
 
-void handleCommand(const char *cmd, const char *why, int *val) {
+void handleCommand(const char *cmd, FlashString why, int *val) {
   // TODO implement challenge/response here and only allow other commands once
   // challenge/response succeeded
   //  this to prevent an attacker from tripping the breaker, thus making the
   //  Arduino (and the replay prevention counter) reset
   // The attacker can then replay an already sent packet they MITM'ed earlier.
 
-  if (strcmp(COMMAND_STATUS, cmd) == 0) {
+  if (strcmp(cmd, COMMAND_STATUS) == 0) {
     *val = getLockStatus();
   } else {
     *val = analogRead(POTENTIOMETER_PIN);
-    if (strcmp(COMMAND_OPEN, cmd) == 0) {
+    if (strcmp(cmd, COMMAND_OPEN) == 0) {
       openDoor();
-    } else if (strcmp(COMMAND_LOCK, cmd) == 0) {
+    } else if (strcmp(cmd, COMMAND_LOCK) == 0) {
       lockDoor();
-    } else if (strcmp(COMMAND_DELAY, cmd) == 0) {
+    } else if (strcmp(cmd, COMMAND_DELAY) == 0) {
 #if ENABLE_BOMBPLANTSOUND
       // Play "bomb has been planted" on koin if enabled
       mattermoreHttpPost(cmd, REASON_LOCKING, *val);
 #endif
       delayedLock();
-    } else if (strcmp(COMMAND_CALIBRATE_OPEN_POS, cmd) == 0) {
+    } else if (strcmp(cmd, COMMAND_CALIBRATE_OPEN_POS) == 0) {
       EEPROM.put(OPEN_POS_ADDRESS, *val);
-    } else if (strcmp(COMMAND_CALIBRATE_OPEN_BND, cmd) == 0) {
+    } else if (strcmp(cmd, COMMAND_CALIBRATE_OPEN_BND) == 0) {
       EEPROM.put(OPEN_BOUND_ADDRESS, *val);
-    } else if (strcmp(COMMAND_CALIBRATE_CLOSE_POS, cmd) == 0) {
+    } else if (strcmp(cmd, COMMAND_CALIBRATE_CLOSE_POS) == 0) {
       EEPROM.put(CLOSED_POS_ADDRESS, *val);
-    } else if (strcmp(COMMAND_CALIBRATE_CLOSE_BND, cmd) == 0) {
+    } else if (strcmp(cmd, COMMAND_CALIBRATE_CLOSE_BND) == 0) {
       EEPROM.put(CLOSED_BOUND_ADDRESS, *val);
     } else {
-      mattermoreHttpPost(COMMAND_INVALID_COMMAND, REASON_PANIC, getLockStatus());
+      mattermoreHttpPost(String(COMMAND_INVALID_COMMAND).c_str(), REASON_PANIC,
+                         getLockStatus());
     }
   }
   mattermoreHttpPost(cmd, why, *val);
@@ -219,8 +221,8 @@ void bringToState(int desired_value) {
       expectedValue += least_movement * (initial_to_desired_positive ? 1 : -1);
       if (initial_to_desired_positive == (expectedValue > current_value)) {
         // Send passed_turning_deadline panic
-        mattermoreHttpPost(COMMAND_PASSED_TURNING_DEADLINE, REASON_PANIC,
-                           getLockStatus());
+        mattermoreHttpPost(String(COMMAND_PASSED_TURNING_DEADLINE).c_str(),
+                           REASON_PANIC, getLockStatus());
         // Move all the way
         turnDirection(direction);
         uint32_t starttime = millis();
@@ -232,8 +234,9 @@ void bringToState(int desired_value) {
           }
         }
         turnHalt();
-        mattermoreHttpPost(direction ? COMMAND_OPENED_UNCLEANLY
-                                     : COMMAND_CLOSED_UNCLEANLY,
+        mattermoreHttpPost(String(direction ? COMMAND_OPENED_UNCLEANLY
+                                            : COMMAND_CLOSED_UNCLEANLY)
+                               .c_str(),
                            REASON_PANIC, getLockStatus());
         break;
       } else {

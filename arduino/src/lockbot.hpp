@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+#include "strings.hpp"
 #include "util.hpp"
 
 // disabled until we get a 10k potentiometer
@@ -46,7 +47,7 @@ void loop();
 
 void delayedLock();
 
-void handleCommand(const char *cmd, const char *why, int *val);
+void handleCommand(const char *cmd, FlashString why, int *val);
 
 LockStatus getLockStatus();
 

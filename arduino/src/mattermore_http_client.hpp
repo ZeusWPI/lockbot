@@ -1,3 +1,7 @@
 #pragma once
 
-bool mattermoreHttpPost(const char *cmd, const char *why, int val);
+#include <Arduino.h>
+
+#include "strings.hpp"
+
+bool mattermoreHttpPost(const char *cmd, FlashString why, int val);

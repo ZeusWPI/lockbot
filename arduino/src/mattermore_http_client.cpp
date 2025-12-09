@@ -13,15 +13,15 @@
  * Makes a http POST request to mattermore on `/doorkeeper`, with `cmd`, `why`,
  * and `val` as body parameters.
  */
-bool mattermoreHttpPost(const char *cmd, const char *why, int val) {
+bool mattermoreHttpPost(const char *cmd, FlashString why, int val) {
   EthernetClient client;
   ClientCleanupGuard clientCleanupGuard(client);
 
   Serial.println(LOG_MATTERMORE_CONNECTING);
   if (client.connect(MATTERMORE_SERVER_HOST, MATTERMORE_SERVER_PORT)) {
     char bodyBuf[64];
-    size_t bodyLength = snprintf(bodyBuf, sizeof(bodyBuf),
-                                 "cmd=%s&why=%s&val=%d", cmd, why, val);
+    size_t bodyLength =
+        snprintf(bodyBuf, sizeof(bodyBuf), FMT_MATTERMORE_BODY, cmd, why, val);
     Serial.print(LOG_MATTERMORE_SENDING);
     Serial.println(bodyBuf);
 
@@ -34,7 +34,7 @@ bool mattermoreHttpPost(const char *cmd, const char *why, int val) {
     {
       char *ptr = hmacHexString;
       for (int i = 0; i < 32; i++) {
-        snprintf(ptr, 3, "%.2X", hmacCalculated[i]);
+        snprintf(ptr, 3, FMT_HEX, hmacCalculated[i]);
         ptr += 2;
       }
     }

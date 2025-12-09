@@ -11,7 +11,7 @@
 #include "util.hpp"
 
 static bool clientParseHeaders(EthernetClient *client, uint8_t *outHmac) {
-  if (!client->find((char *)HEADER_PREFIX_HMAC))
+  if (!client->find((char *)String(HEADER_PREFIX_HMAC).c_str()))
     return false;
   char octet[3] = {0};
   for (int i = 0; i < 32; i++) {
@@ -60,7 +60,7 @@ static void parseBody(const uint8_t *bodyBuf, uint64_t *outCommandCounter,
   strncpy(outCommandBuf, bodyStr, outCommandBufSize);
 }
 
-static void clientSend400(EthernetClient *client, const char *message) {
+static void clientSend400(EthernetClient *client, FlashString message) {
   client->println(HTTP_400);
   client->print(HEADER_PREFIX_CONTENT_LENGTH);
   client->println(strlen(message));
@@ -68,7 +68,8 @@ static void clientSend400(EthernetClient *client, const char *message) {
   client->print(message);
 }
 
-HttpServer::HttpServer(uint16_t port) : server(port), currentCommandCounter(), lastCommand() {}
+HttpServer::HttpServer(uint16_t port)
+    : server(port), currentCommandCounter(), lastCommand() {}
 
 void HttpServer::start() { server.begin(); }
 
@@ -80,47 +81,58 @@ void HttpServer::tick(LockStatus lockStatus) {
   if (!client)
     return;
 
+  Serial.println(F("Incoming http request:"));
+
   uint8_t hmacReceived[32]{};
   if (!clientParseHeaders(&client, hmacReceived)) {
+    Serial.println(F("=> no hmac"));
     clientSend400(&client, COMMAND_NO_HMAC);
     // Not enough memory :/
-    // mattermoreHttpPost(COMMAND_NO_HMAC, REASON_ATTACK, 0);
+    // mattermoreHttpPost(String(COMMAND_NO_HMAC).c_str(), REASON_ATTACK, 0);
     return;
   }
+  Serial.println(F("- hmac set"));
 
   // allow reading body of up to 128 bytes (should be enough)
   uint8_t bodyBuf[128 + 1]{};
   size_t bodyLength = clientReadBody(&client, bodyBuf, sizeof(bodyBuf) - 1);
   if (client.available()) {
+    Serial.println(F("=> too long"));
     clientSend400(&client, COMMAND_TOO_LONG);
     // Not enough memory :/
-    // mattermoreHttpPost(COMMAND_TOO_LONG, REASON_ATTACK, 0);
+    // mattermoreHttpPost(String(COMMAND_TOO_LONG).c_str(), REASON_ATTACK, 0);
     return;
   }
-  // Serial.println((char *)bodyBuf);
+  Serial.print(F("- body: "));
+  Serial.println((char *)bodyBuf);
 
   Sha256Class sha256{};
   sha256.initHmac(DOWN_COMMAND_KEY, strlen((const char *)DOWN_COMMAND_KEY));
   sha256.write(bodyBuf, bodyLength);
   uint8_t *hmacCalculated = sha256.resultHmac();
   if (memcmp(hmacCalculated, hmacReceived, 32) != 0) {
+    Serial.println(F("=> wrong hmac"));
     clientSend400(&client, COMMAND_WRONG_HMAC);
     // Not enough memory :/
-    // mattermoreHttpPost(COMMAND_WRONG_HMAC, REASON_ATTACK, 0);
+    // mattermoreHttpPost(String(COMMAND_WRONG_HMAC).c_str(), REASON_ATTACK, 0);
     return;
   }
+  Serial.println(F("- hmac ok"));
 
   uint64_t receivedCommandCounter{};
   parseBody(bodyBuf, &receivedCommandCounter, lastCommand, sizeof(lastCommand));
 
   if (receivedCommandCounter <= currentCommandCounter) {
+    Serial.println(F("=> replay"));
     clientSend400(&client, COMMAND_REPLAY);
     // Not enough memory :/
-    // mattermoreHttpPost(COMMAND_REPLAY, REASON_ATTACK, 0);
+    // mattermoreHttpPost(String(COMMAND_REPLAY).c_str(), REASON_ATTACK, 0);
     return;
   }
   currentCommandCounter = receivedCommandCounter;
+  Serial.println(F("- counter ok"));
 
+  Serial.println(F("=> 200 OK"));
   client.println(HTTP_200);
   client.print(HEADER_PREFIX_CONTENT_LENGTH);
   client.println(1);

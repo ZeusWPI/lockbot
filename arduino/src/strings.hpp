@@ -2,11 +2,16 @@
 
 #include <Arduino.h>
 
+#define FlashString const __FlashStringHelper *
+
 #ifdef STRINGS_CPP
-#define STR(name, value) extern const char name[] = value
+#define STR(name, value) extern const char name[] PROGMEM = value
 #else
-#define STR(name, value) extern const char name[]
+#define STR(name, value) extern const __FlashStringHelper name[]
 #endif
+
+STR(FMT_MATTERMORE_BODY, "cmd=%s&why=%S&val=%d");
+STR(FMT_HEX, "%.2X");
 
 STR(COMMAND_STATUS, "status");
 STR(COMMAND_OPEN, "open");
@@ -60,3 +65,7 @@ STR(LOG_MATTERMORE_CONNECTING_FAILED, "Failed to connect to mattermore");
 STR(LOG_MATTERMORE_SENDING, "Sending: ");
 
 #undef STR
+
+size_t strlen(FlashString s);
+int strcmp(const char *s1, FlashString s2);
+int snprintf(char *s, size_t n, FlashString fmt, ...);

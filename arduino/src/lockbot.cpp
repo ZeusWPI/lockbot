@@ -23,7 +23,10 @@ Debounced delayedLockButton{};
 
 HttpServer httpServer(80);
 
+#if ENABLE_CHALLENGE
 char randomGeneratedChars[32 + 1]{};
+bool receivedChallengeResponse = false;
+#endif
 
 LockStatus lastStatus{};
 
@@ -62,12 +65,17 @@ void setup() {
 
   mattermoreHttpPost(String(COMMAND_UP).c_str(), REASON_BOOT, getLockStatus());
 
+#if ENABLE_CHALLENGE
   for (size_t i = 0; i < sizeof(randomGeneratedChars) - 1; i++) {
     randomGeneratedChars[i] = 'A' + (analogRead(UNCONNECTED_RANDOM_PIN) % 26);
   }
+#endif
 
   lastStatus = getLockStatus();
+
+#if ENABLE_CHALLENGE
   mattermoreHttpPost(randomGeneratedChars, REASON_CHALLENGE, lastStatus);
+#endif
 }
 
 void loop() {

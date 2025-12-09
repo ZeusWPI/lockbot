@@ -5,6 +5,9 @@
 #include "strings.hpp"
 #include "util.hpp"
 
+// not fully implementated
+#define ENABLE_CHALLENGE 0
+
 // disabled until we get a 10k potentiometer
 #define ENABLE_TURN_ASSIST 0
 
@@ -27,10 +30,12 @@
 // Connect one leg of the button to 5, the other to ground
 #define BUTTON_PIN 5
 
+#if ENABLE_CHALLENGE
 // Leave this pin unconnected (or alternatively, connect a short length of wire
 // to the pin and leave unconnected) This is used to collect randomness via ADC
 // noise
 #define UNCONNECTED_RANDOM_PIN A1
+#endif
 
 // SERVO_PIN_A = 9
 // Connect the data pin of the servo motor to pin 9, ground to ground. VCC

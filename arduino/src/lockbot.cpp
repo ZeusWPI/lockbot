@@ -47,23 +47,23 @@ void setup() {
 #endif
 
   Serial.begin(9600);
-  Serial.println(LOG_BOOTING);
+  Serial.println(FSTR_LOG_BOOTING);
 
-  Serial.println(LOG_INITIALIZING_SERVO);
+  Serial.println(FSTR_LOG_INITIALIZING_SERVO);
   // Config servo motor control pin, 500-2500 is for the 10kg/cm servo
   // SERVO_PIN_A = pin 9 see http://arduiniana.org/libraries/pwmservo/
   door.attach(SERVO_PIN_A);
   turnHalt();
 
-  Serial.println(LOG_INITIALIZING_ETHERNET);
+  Serial.println(FSTR_LOG_INITIALIZING_ETHERNET);
   setupEthernet();
 
-  Serial.println(LOG_STARTING_WEBSERVER);
+  Serial.println(FSTR_LOG_STARTING_WEBSERVER);
   httpServer.start();
 
   noToneAC2();
 
-  mattermoreHttpPost(String(COMMAND_UP).c_str(), REASON_BOOT, getLockStatus());
+  mattermoreHttpPost(STR_COMMAND_UP, FSTR_REASON_BOOT, getLockStatus());
 
 #if ENABLE_CHALLENGE
   for (size_t i = 0; i < sizeof(randomGeneratedChars) - 1; i++) {
@@ -86,12 +86,12 @@ void loop() {
   httpServer.tick(getLockStatus());
   int value = 0;
   if (httpServer.lastCommand[0]) {
-    handleCommand(httpServer.lastCommand, REASON_MATTERMORE, &value);
+    handleCommand(httpServer.lastCommand, FSTR_REASON_MATTERMORE, &value);
   }
 
   if (delayedLockButton.get_and_reset_press_count() > 0) {
-    Serial.println(LOG_DELAYED_LOCK_PRESSED);
-    handleCommand(String(COMMAND_DELAY).c_str(), REASON_DELAY_BUTTON, &value);
+    Serial.println(FSTR_LOG_DELAYED_LOCK_PRESSED);
+    handleCommand(STR_COMMAND_DELAY, FSTR_REASON_DELAY_BUTTON, &value);
     delay(100);
   }
 
@@ -106,8 +106,7 @@ void loop() {
   LockStatus newStatus = getLockStatus();
   if (newStatus != inbetween && newStatus != lastStatus) {
     lastStatus = newStatus;
-    mattermoreHttpPost(String(COMMAND_CHANGE).c_str(), REASON_STATE,
-                       lastStatus);
+    mattermoreHttpPost(STR_COMMAND_CHANGE, FSTR_REASON_STATE, lastStatus);
   }
 }
 
@@ -138,30 +137,30 @@ void handleCommand(const char *cmd, FlashString why, int *val) {
   //  Arduino (and the replay prevention counter) reset
   // The attacker can then replay an already sent packet they MITM'ed earlier.
 
-  if (strcmp(cmd, COMMAND_STATUS) == 0) {
+  if (strcmp(cmd, FSTR_COMMAND_STATUS) == 0) {
     *val = getLockStatus();
   } else {
     *val = analogRead(POTENTIOMETER_PIN);
-    if (strcmp(cmd, COMMAND_OPEN) == 0) {
+    if (strcmp(cmd, FSTR_COMMAND_OPEN) == 0) {
       openDoor();
-    } else if (strcmp(cmd, COMMAND_LOCK) == 0) {
+    } else if (strcmp(cmd, FSTR_COMMAND_LOCK) == 0) {
       lockDoor();
-    } else if (strcmp(cmd, COMMAND_DELAY) == 0) {
+    } else if (strcmp(cmd, STR_COMMAND_DELAY) == 0) {
 #if ENABLE_BOMBPLANTSOUND
       // Play "bomb has been planted" on koin if enabled
-      mattermoreHttpPost(cmd, REASON_LOCKING, *val);
+      mattermoreHttpPost(cmd, FSTR_REASON_LOCKING, *val);
 #endif
       delayedLock();
-    } else if (strcmp(cmd, COMMAND_CALIBRATE_OPEN_POS) == 0) {
+    } else if (strcmp(cmd, FSTR_COMMAND_CALIBRATE_OPEN_POS) == 0) {
       EEPROM.put(OPEN_POS_ADDRESS, *val);
-    } else if (strcmp(cmd, COMMAND_CALIBRATE_OPEN_BND) == 0) {
+    } else if (strcmp(cmd, FSTR_COMMAND_CALIBRATE_OPEN_BND) == 0) {
       EEPROM.put(OPEN_BOUND_ADDRESS, *val);
-    } else if (strcmp(cmd, COMMAND_CALIBRATE_CLOSE_POS) == 0) {
+    } else if (strcmp(cmd, FSTR_COMMAND_CALIBRATE_CLOSE_POS) == 0) {
       EEPROM.put(CLOSED_POS_ADDRESS, *val);
-    } else if (strcmp(cmd, COMMAND_CALIBRATE_CLOSE_BND) == 0) {
+    } else if (strcmp(cmd, FSTR_COMMAND_CALIBRATE_CLOSE_BND) == 0) {
       EEPROM.put(CLOSED_BOUND_ADDRESS, *val);
     } else {
-      mattermoreHttpPost(String(COMMAND_INVALID_COMMAND).c_str(), REASON_PANIC,
+      mattermoreHttpPost(STR_COMMAND_INVALID_COMMAND, FSTR_REASON_PANIC,
                          getLockStatus());
     }
   }
@@ -229,8 +228,8 @@ void bringToState(int desired_value) {
       expectedValue += least_movement * (initial_to_desired_positive ? 1 : -1);
       if (initial_to_desired_positive == (expectedValue > current_value)) {
         // Send passed_turning_deadline panic
-        mattermoreHttpPost(String(COMMAND_PASSED_TURNING_DEADLINE).c_str(),
-                           REASON_PANIC, getLockStatus());
+        mattermoreHttpPost(STR_COMMAND_PASSED_TURNING_DEADLINE,
+                           FSTR_REASON_PANIC, getLockStatus());
         // Move all the way
         turnDirection(direction);
         uint32_t starttime = millis();
@@ -242,10 +241,9 @@ void bringToState(int desired_value) {
           }
         }
         turnHalt();
-        mattermoreHttpPost(String(direction ? COMMAND_OPENED_UNCLEANLY
-                                            : COMMAND_CLOSED_UNCLEANLY)
-                               .c_str(),
-                           REASON_PANIC, getLockStatus());
+        mattermoreHttpPost(direction ? STR_COMMAND_OPENED_UNCLEANLY
+                                     : STR_COMMAND_CLOSED_UNCLEANLY,
+                           FSTR_REASON_PANIC, getLockStatus());
         break;
       } else {
         last_move_check = millis();
@@ -315,17 +313,17 @@ void turnAssistLoop() {
 void turnOpen() {
   digitalWrite(RELAY_PIN, HIGH);
   door.write(10);
-  Serial.println(LOG_TURNING_OPEN);
+  Serial.println(FSTR_LOG_TURNING_OPEN);
 }
 void turnClose() {
   digitalWrite(RELAY_PIN, HIGH);
   door.write(170);
-  Serial.println(LOG_TURNING_CLOSE);
+  Serial.println(FSTR_LOG_TURNING_CLOSE);
 }
 void turnHalt() {
   digitalWrite(RELAY_PIN, LOW);
   door.write(94);
-  Serial.println(LOG_TURNING_HALT);
+  Serial.println(FSTR_LOG_TURNING_HALT);
 }
 
 void turnDirection(bool directionIsOpen) {

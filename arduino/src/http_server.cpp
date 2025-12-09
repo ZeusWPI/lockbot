@@ -12,7 +12,7 @@
 #include "util.hpp"
 
 static bool clientParseHeaders(EthernetClient *client, uint8_t *outHmac) {
-  if (!client->find((char *)String(HEADER_PREFIX_HMAC).c_str()))
+  if (!client->find((char *)STR_HEADER_PREFIX_HMAC))
     return false;
   char octet[3] = {0};
   for (int i = 0; i < 32; i++) {
@@ -61,9 +61,9 @@ static void parseBody(const uint8_t *bodyBuf, uint64_t *outCommandCounter,
   strncpy(outCommandBuf, bodyStr, outCommandBufSize);
 }
 
-static void clientSend400(EthernetClient *client, FlashString message) {
-  client->println(HTTP_400);
-  client->print(HEADER_PREFIX_CONTENT_LENGTH);
+static void clientSend400(EthernetClient *client, const char *message) {
+  client->println(FSTR_HTTP_400);
+  client->print(FSTR_HEADER_PREFIX_CONTENT_LENGTH);
   client->println(strlen(message));
   client->println();
   client->print(message);
@@ -87,9 +87,9 @@ void HttpServer::tick(LockStatus lockStatus) {
   uint8_t hmacReceived[32]{};
   if (!clientParseHeaders(&client, hmacReceived)) {
     Serial.println(F("=> no hmac"));
-    clientSend400(&client, COMMAND_NO_HMAC);
+    clientSend400(&client, STR_COMMAND_NO_HMAC);
     // This spams ~verbose-mattermore
-    // mattermoreHttpPost(String(COMMAND_NO_HMAC).c_str(), REASON_ATTACK, 0);
+    // mattermoreHttpPost(STR_COMMAND_NO_HMAC, REASON_ATTACK, 0);
     return;
   }
   Serial.println(F("- hmac set"));
@@ -99,8 +99,8 @@ void HttpServer::tick(LockStatus lockStatus) {
   size_t bodyLength = clientReadBody(&client, bodyBuf, sizeof(bodyBuf) - 1);
   if (client.available()) {
     Serial.println(F("=> too long"));
-    clientSend400(&client, COMMAND_TOO_LONG);
-    mattermoreHttpPost(String(COMMAND_TOO_LONG).c_str(), REASON_ATTACK, 0);
+    clientSend400(&client, STR_COMMAND_TOO_LONG);
+    mattermoreHttpPost(STR_COMMAND_TOO_LONG, FSTR_REASON_ATTACK, 0);
     return;
   }
   Serial.print(F("- body: "));
@@ -112,8 +112,8 @@ void HttpServer::tick(LockStatus lockStatus) {
   uint8_t *hmacCalculated = sha256.resultHmac();
   if (memcmp(hmacCalculated, hmacReceived, 32) != 0) {
     Serial.println(F("=> wrong hmac"));
-    clientSend400(&client, COMMAND_WRONG_HMAC);
-    mattermoreHttpPost(String(COMMAND_WRONG_HMAC).c_str(), REASON_ATTACK, 0);
+    clientSend400(&client, STR_COMMAND_WRONG_HMAC);
+    mattermoreHttpPost(STR_COMMAND_WRONG_HMAC, FSTR_REASON_ATTACK, 0);
     return;
   }
   Serial.println(F("- hmac ok"));
@@ -123,16 +123,16 @@ void HttpServer::tick(LockStatus lockStatus) {
 
   if (receivedCommandCounter <= currentCommandCounter) {
     Serial.println(F("=> replay"));
-    clientSend400(&client, COMMAND_REPLAY);
-    mattermoreHttpPost(String(COMMAND_REPLAY).c_str(), REASON_ATTACK, 0);
+    clientSend400(&client, STR_COMMAND_REPLAY);
+    mattermoreHttpPost(STR_COMMAND_REPLAY, FSTR_REASON_ATTACK, 0);
     return;
   }
   currentCommandCounter = receivedCommandCounter;
   Serial.println(F("- counter ok"));
 
   Serial.println(F("=> 200 OK"));
-  client.println(HTTP_200);
-  client.print(HEADER_PREFIX_CONTENT_LENGTH);
+  client.println(FSTR_HTTP_200);
+  client.print(FSTR_HEADER_PREFIX_CONTENT_LENGTH);
   client.println(1);
   client.println();
   client.print((int)lockStatus);

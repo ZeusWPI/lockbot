@@ -17,12 +17,12 @@ bool mattermoreHttpPost(const char *cmd, FlashString why, int val) {
   EthernetClient client;
   ClientCleanupGuard clientCleanupGuard(client);
 
-  Serial.println(LOG_MATTERMORE_CONNECTING);
+  Serial.println(FSTR_LOG_MATTERMORE_CONNECTING);
   if (client.connect(MATTERMORE_SERVER_HOST, MATTERMORE_SERVER_PORT)) {
     char bodyBuf[64];
-    size_t bodyLength =
-        snprintf(bodyBuf, sizeof(bodyBuf), FMT_MATTERMORE_BODY, cmd, why, val);
-    Serial.print(LOG_MATTERMORE_SENDING);
+    size_t bodyLength = snprintf(bodyBuf, sizeof(bodyBuf),
+                                 FSTR_FMT_MATTERMORE_BODY, cmd, why, val);
+    Serial.print(FSTR_LOG_MATTERMORE_SENDING);
     Serial.println(bodyBuf);
 
     Sha256Class sha256;
@@ -34,25 +34,25 @@ bool mattermoreHttpPost(const char *cmd, FlashString why, int val) {
     {
       char *ptr = hmacHexString;
       for (int i = 0; i < 32; i++) {
-        snprintf(ptr, 3, FMT_HEX, hmacCalculated[i]);
+        snprintf(ptr, 3, FSTR_FMT_HEX, hmacCalculated[i]);
         ptr += 2;
       }
     }
 
-    client.println(HTTP_POST_DOORKEEPER);
+    client.println(FSTR_HTTP_POST_DOORKEEPER);
 
     // Headers
     {
-      client.print(HEADER_PREFIX_HOST);
+      client.print(FSTR_HEADER_PREFIX_HOST);
       client.println(MATTERMORE_SERVER_HOST);
 
-      client.print(HEADER_PREFIX_HMAC);
+      client.print(STR_HEADER_PREFIX_HMAC);
       client.println(hmacHexString);
 
-      client.print(HEADER_PREFIX_CONTENT_LENGTH);
+      client.print(FSTR_HEADER_PREFIX_CONTENT_LENGTH);
       client.println(bodyLength);
 
-      client.println(HEADER_CONNECTION_CLOSE);
+      client.println(FSTR_HEADER_CONNECTION_CLOSE);
 
       client.println();
     }
@@ -62,6 +62,6 @@ bool mattermoreHttpPost(const char *cmd, FlashString why, int val) {
 
     return true;
   }
-  Serial.println(LOG_MATTERMORE_CONNECTING_FAILED);
+  Serial.println(FSTR_LOG_MATTERMORE_CONNECTING_FAILED);
   return false;
 }

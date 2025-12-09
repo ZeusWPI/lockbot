@@ -6,6 +6,7 @@
 #include <sha256.h>
 
 #include "ethernet.hpp"
+#include "mattermore_http_client.hpp"
 #include "strings.hpp"
 #include "tokens.hpp"
 #include "util.hpp"
@@ -87,7 +88,7 @@ void HttpServer::tick(LockStatus lockStatus) {
   if (!clientParseHeaders(&client, hmacReceived)) {
     Serial.println(F("=> no hmac"));
     clientSend400(&client, COMMAND_NO_HMAC);
-    // Not enough memory :/
+    // This spams ~verbose-mattermore
     // mattermoreHttpPost(String(COMMAND_NO_HMAC).c_str(), REASON_ATTACK, 0);
     return;
   }
@@ -99,8 +100,7 @@ void HttpServer::tick(LockStatus lockStatus) {
   if (client.available()) {
     Serial.println(F("=> too long"));
     clientSend400(&client, COMMAND_TOO_LONG);
-    // Not enough memory :/
-    // mattermoreHttpPost(String(COMMAND_TOO_LONG).c_str(), REASON_ATTACK, 0);
+    mattermoreHttpPost(String(COMMAND_TOO_LONG).c_str(), REASON_ATTACK, 0);
     return;
   }
   Serial.print(F("- body: "));
@@ -113,8 +113,7 @@ void HttpServer::tick(LockStatus lockStatus) {
   if (memcmp(hmacCalculated, hmacReceived, 32) != 0) {
     Serial.println(F("=> wrong hmac"));
     clientSend400(&client, COMMAND_WRONG_HMAC);
-    // Not enough memory :/
-    // mattermoreHttpPost(String(COMMAND_WRONG_HMAC).c_str(), REASON_ATTACK, 0);
+    mattermoreHttpPost(String(COMMAND_WRONG_HMAC).c_str(), REASON_ATTACK, 0);
     return;
   }
   Serial.println(F("- hmac ok"));
@@ -125,8 +124,7 @@ void HttpServer::tick(LockStatus lockStatus) {
   if (receivedCommandCounter <= currentCommandCounter) {
     Serial.println(F("=> replay"));
     clientSend400(&client, COMMAND_REPLAY);
-    // Not enough memory :/
-    // mattermoreHttpPost(String(COMMAND_REPLAY).c_str(), REASON_ATTACK, 0);
+    mattermoreHttpPost(String(COMMAND_REPLAY).c_str(), REASON_ATTACK, 0);
     return;
   }
   currentCommandCounter = receivedCommandCounter;

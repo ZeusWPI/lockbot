@@ -53,6 +53,7 @@ FSTR(HEADER_CONNECTION_CLOSE, "Connection: close")
 FSTR(HEADER_PREFIX_CONTENT_LENGTH, "Content-Length: ")
 STR(HEADER_PREFIX_HMAC, "HMAC: ")
 FSTR(HEADER_PREFIX_HOST, "Host: ")
+STR(END_OF_HEADERS, "\r\n\r\n")
 
 FSTR(LOG_BOOTING, "Booting up...")
 FSTR(LOG_INITIALIZING_SERVO, "Initialising servo controller...")

@@ -28,19 +28,20 @@ static bool clientParseHeaders(EthernetClient *client, uint8_t *outHmac) {
     outHmac++;
   }
 
-  if (!client->find((char *)"\r\n\r\n"))
+  if (!client->find((char *)STR_END_OF_HEADERS))
     return false;
 
   return true;
 }
 
 static size_t clientReadBody(EthernetClient *client, uint8_t *outBuf,
-                             size_t outBufLength) {
+                             size_t outBufSize) {
   size_t bytesRead = 0;
-  while (bytesRead < outBufLength && client->available()) {
+  while (bytesRead + 1 < outBufSize && client->available()) {
     outBuf[bytesRead] = client->read();
     bytesRead++;
   }
+  outBuf[bytesRead] = 0;
   return bytesRead;
 }
 
@@ -48,7 +49,7 @@ static size_t clientReadBody(EthernetClient *client, uint8_t *outBuf,
 static void parseBody(const uint8_t *bodyBuf, uint64_t *outCommandCounter,
                       char *outCommandBuf, size_t outCommandBufSize) {
   outCommandCounter = 0;
-  const char *bodyStr = (char *)bodyBuf;
+  const char *bodyStr = (const char *)bodyBuf;
   while (bodyStr[0] && bodyStr[0] != ';') {
     *outCommandCounter *= 10;
     *outCommandCounter += bodyStr[0] - '0';
@@ -84,7 +85,7 @@ void HttpServer::tick(LockStatus lockStatus) {
 
   Serial.println(F("Incoming http request:"));
 
-  uint8_t hmacReceived[32]{};
+  uint8_t hmacReceived[32];
   if (!clientParseHeaders(&client, hmacReceived)) {
     Serial.println(F("=> no hmac"));
     clientSend400(&client, STR_COMMAND_NO_HMAC);
@@ -95,8 +96,8 @@ void HttpServer::tick(LockStatus lockStatus) {
   Serial.println(F("- hmac set"));
 
   // allow reading body of up to 128 bytes (should be enough)
-  uint8_t bodyBuf[128 + 1]{};
-  size_t bodyLength = clientReadBody(&client, bodyBuf, sizeof(bodyBuf) - 1);
+  uint8_t bodyBuf[128 + 1];
+  size_t bodyLength = clientReadBody(&client, bodyBuf, sizeof(bodyBuf));
   if (client.available()) {
     Serial.println(F("=> too long"));
     clientSend400(&client, STR_COMMAND_TOO_LONG);
@@ -104,7 +105,7 @@ void HttpServer::tick(LockStatus lockStatus) {
     return;
   }
   Serial.print(F("- body: "));
-  Serial.println((char *)bodyBuf);
+  Serial.println((const char *)bodyBuf);
 
   Sha256Class sha256{};
   sha256.initHmac(DOWN_COMMAND_KEY, strlen((const char *)DOWN_COMMAND_KEY));
